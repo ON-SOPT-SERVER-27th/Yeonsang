@@ -19,7 +19,7 @@ const Randomize = memArr => {
 const Organize = n => {
     const OB = Randomize(OB_members);
     const YB = Randomize(YB_members);
-    ans = [];
+    var ans = new Array();
 
     // Initialize Answer array
     for(var i = 1; i <= n; i++){
