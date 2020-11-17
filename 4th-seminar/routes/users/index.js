@@ -86,7 +86,7 @@ router.post('/signin', async (req, res) => {
         //4. 비밀번호 확인하기 - 로그인할 email의 salt를 DB에서 가져와서 사용자가 request로 보낸 password와 암호화를 한후 디비에 저장되어있는 password와 일치하면 true
         // 일치하지 않으면 Miss Match password 반환
         const {
-            email,
+            id,
             password: savedPassword,
             userName,
             salt,
