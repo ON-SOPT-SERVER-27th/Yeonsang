@@ -58,6 +58,7 @@ router.post('/signup', async (req, res) => {
         return res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.SIGN_UP_FAIL));
     }
 })
+
 router.post('/signin', async (req, res) => {
     const {
         email,
@@ -91,22 +92,25 @@ router.post('/signin', async (req, res) => {
             userName,
             salt,
         } = alreadyEmail;
-        
+
         const inputPassword = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('base64');
 
-        if(inputPassword !== savedPassword) {
+        if (inputPassword !== savedPassword) {
             console.log('비밀번호가 일치하지 않습니다');
             return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.MISS_MATCH_PW));
         }
 
         //5. status: 200 ,message: SIGN_IN_SUCCESS, data: id, email, userName 반환
-        return res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.SIGN_IN_SUCCESS, { id, email, userName }));
+        return res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.SIGN_IN_SUCCESS, {
+            id,
+            email,
+            userName
+        }));
     } catch (error) {
         console.error(error);
         return res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.SIGN_IN_FAIL));
     }
 })
-
 
 router.get('/', async (req, res) => {
     //1. 모든 사용자 정보 (id, email, userName ) 리스폰스!
@@ -147,6 +151,85 @@ router.get('/:id', async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.READ_USER_FAIL));
+    }
+})
+
+router.put('/:id', async (req, res) => {
+    // 1. parameter로 id 값 받아오고, body로 값 받아옴
+    const {
+        id
+    } = req.params;
+
+    const {
+        email,
+        password,
+        userName
+    } = req.body;
+
+    try {
+        // 2. id값이 유효한지 체크! 존재하지 않는 유저면 NO_USER 반환
+        const user = await User.findOne({
+            where: {
+                id: id,
+            },
+            attributes: ['id'],
+        });
+
+        if (!user) {
+            console.log('존재하지 않는 아이디 입니다.');
+            return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
+        }
+
+        // 3. 사용자가 있다면, body의 값으로 수정
+        const salt = crypto.randomBytes(64).toString('base64');
+        const newPassword = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('base64');
+
+        const update = await User.update({
+            email,
+            password: newPassword,
+            userName,
+            salt,
+        }, {
+            where: {
+                id: id,
+            }
+        });
+        return res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.MEMBER_UPDATE_SUCCESS));
+    } catch (error) {
+        console.error(error);
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
+    }
+})
+
+router.delete('/:id', async (req, res) => {
+    // 1. parameter 로 id 값 받아오기
+    const {
+        id
+    } = req.params;
+
+    try {
+        // 2. id값이 유효한지 체크! 존재하지 않는 유저면 NO_USER 반환
+        const user = await User.findOne( {
+            where: {
+                id: id,
+            }
+        });
+
+        if(!user) {
+            console.log('존재하지 않는 아이디 입니다');
+            return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
+        }
+
+        // 3. 사용자가 있다면, 삭제
+        const del = await User.destroy( {
+            where: {
+                id
+            }
+        });
+        return res.status(statusCode.OK).send(util.success(statusCode.OK, responseMessage.MEMBER_DELETE_SUCCESS));
+    } catch (error) {
+        console.error(error);
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).send(util.fail(statusCode.INTERNAL_SERVER_ERROR, responseMessage.INTERNAL_SERVER_ERROR));
     }
 })
 
