@@ -70,6 +70,16 @@ module.exports = {
         const PostId = req.params.postId;
         const UserId = req.body.userId;
         try {
+            const like = await Like.findOne({
+                where: {
+                    UserId,
+                    PostId
+                }
+            })
+            if(!like) {
+                console.log('존재하지 않는 like 입니다.');
+                return res.status(sc.BAD_REQUEST).send(ut.fail(sc.BAD_REQUEST, rm.DELETE_LIKE_FAIL));
+            }
             await Like.destroy( {
                 where: {
                     UserId,
