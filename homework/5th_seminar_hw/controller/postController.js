@@ -6,6 +6,7 @@ const {
     Post,
     Like
 } = require('../models');
+const responseMessage = require('../modules/responseMessage');
 
 module.exports = {
     createPost: async (req, res) => {
@@ -63,6 +64,22 @@ module.exports = {
         } catch (err) {
             console.log(err);
             return res.status(sc.INTERNAL_SERVER_ERROR).send(ut.fail(sc.INTERNAL_SERVER_ERROR, rm.CREATE_LIKE_FAIL));
+        }
+    },
+    deleteLike: async (req, res) => {
+        const PostId = req.params.postId;
+        const UserId = req.body.userId;
+        try {
+            await Like.destroy( {
+                where: {
+                    UserId,
+                    PostId
+                },
+            });
+            return res.status(sc.OK).send(ut.success(sc.OK, rm.DELETE_LIKE_SUCCESS));
+        } catch (err) {
+            console.log(err);
+            return res.status(sc.INTERNAL_SERVER_ERROR).send(ut.fail(sc.INTERNAL_SERVER_ERROR, rm.DELETE_LIKE_FAIL));
         }
     },
 }
